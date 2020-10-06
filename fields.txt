@@ -1,0 +1,4 @@
+Fields that should be included in export:
+- events
+- Intervals
+- 
