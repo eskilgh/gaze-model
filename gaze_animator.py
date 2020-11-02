@@ -1,10 +1,16 @@
 from matplotlib import pyplot as plt
+from matplotlib import animation
 from matplotlib.animation import FuncAnimation
 import numpy as np
 
 
+plt.rcParams[
+    "animation.ffmpeg_path"
+] = "/Users/eskilgaarehostad/miniconda3/envs/data/bin/ffmpeg"
+
+
 class GazeAnimator:
-    def __init__(self, data, duration, fps: int = 30):
+    def __init__(self, data, duration, img=None, fps: int = 30):
         assert len(data["time"]) > 0 and (
             len(data["time"]) == len(data["x"]) == len(data["y"]) > 0
         )
@@ -14,10 +20,12 @@ class GazeAnimator:
         self.x = data["x"]
         self.y = data["y"]
         self.duration = duration
+        self.img = img
         self.fps = fps
         self.interval = 1000 // fps
+        self.lines = []
 
-    def split(self):
+    def split_data(self):
         nr_of_frames = int(np.rint((self.duration * self.fps) / 10 ** 3))
         return (
             np.array_split(self.time, nr_of_frames),
@@ -26,37 +34,57 @@ class GazeAnimator:
         )
 
     def animate(self):
-        time, x, y = self.split()
+        fig = plt.figure(figsize=(8, 7), facecolor="black")
 
-        fig, ax = plt.subplots()
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        (plot,) = ax.plot(0, 0)
-        plot.set_xdata(x.pop(0))
-        plot.set_ydata(y.pop(0))
+        ax1 = plt.axes(xlim=(0, 1), ylim=(0, 1))
+        # Remove ticks from axes
+        plt.xticks([], [])
+        plt.yticks([], [])
+        # origo is located top left
+        ax1.invert_yaxis()
+
+        self.line = ax1.plot([], [], lw=1, marker=".", color="red")[0]
+        self.point = ax1.plot(
+            [],
+            [],
+            marker="o",
+            color="white",
+            markeredgecolor="red",
+            ls="",
+        )[0]
+        time, x, y = self.split_data()
 
         animation = FuncAnimation(
             fig,
-            func=self.animation_frame,
+            self.anim_frame,
+            init_func=self.anim_init,
             frames=zip(x, y),
-            fargs=[plot],
             interval=self.interval,
             repeat=False,
+            blit=True,
+            save_count=len(x),
         )
+        if self.img:
+            im = plt.imread(self.img)
+            ax1.imshow(im, extent=[0, 1, 0, 1], zorder=0, alpha=0.8)
+
         plt.show()
         return animation
 
-    def animation_frame(self, points, *fargs):
-        plot = fargs[0]
+    def anim_init(self):
+        self.line.set_data([], [])
+        self.point.set_data([], [])
+        return [self.line, self.point]
+
+    def anim_frame(self, points):
         x_vals, y_vals = points
-        plot.set_xdata(x_vals)
-        plot.set_ydata(y_vals)
-        pass
+        self.line.set_data(x_vals, y_vals)
+        self.point.set_data(x_vals[-1], y_vals[-1])
+        return [self.line, self.point]
 
 
 if __name__ == "__main__":
     import pandas as pd
-    from pprint import pprint
 
     df = pd.read_csv("einar_siri_fixation.tsv", sep="\t")
     cols_to_keep = [
@@ -72,9 +100,10 @@ if __name__ == "__main__":
         (df["Presented Media name"] == "test1.png")
         & (df["Participant name"] == "Einar")
     ]
-    df_start = df.head(600).dropna()
+    df_start = df.head(1200).dropna()
     timestamps = df_start["Recording timestamp"].values
     duration = (timestamps[-1] - timestamps[0]) // 10 ** 3
+
     data = {
         "time": timestamps,
         "x": [
@@ -86,5 +115,7 @@ if __name__ == "__main__":
             for y in df_start["Gaze point Y (MCSnorm)"].values
         ],
     }
-    animator = GazeAnimator(data, duration)
-    animation = animator.animate()
+    animator = GazeAnimator(data, duration, img="test1.png")
+    anim = animator.animate()
+    writer = animation.FFMpegWriter(fps=30)
+    # anim.save("animation.mp4", writer=writer)
