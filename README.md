@@ -3,6 +3,7 @@ Project for modeling human eye gaze trying to find patterns in pictures of pure 
 
 To get started:
 
-Run `$jupyter notebook` and view the fixation and saccade analysis.
+Run `$jupyter notebook` and open the fixation and saccade notebooks for data analysis. 
+`model_v3.py` is the 'current' implementation of the model. 
 
 
