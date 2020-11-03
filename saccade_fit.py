@@ -6,6 +6,8 @@ import pandas as pd
 import scipy.stats as st
 import statsmodels.api as sm
 
+# Copied from
+# https://stackoverflow.com/questions/6620471/fitting-empirical-distribution-to-theoretical-ones-with-scipy-python
 
 matplotlib.rcParams["figure.figsize"] = (16.0, 12.0)
 matplotlib.style.use("ggplot")
