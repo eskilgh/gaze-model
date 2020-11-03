@@ -33,13 +33,17 @@ class GazeAnimator:
             np.array_split(self.y, nr_of_frames),
         )
 
-    def animate(self):
+    def animate(self, title, show=False):
         fig = plt.figure(figsize=(8, 7), facecolor="black")
 
         ax1 = plt.axes(xlim=(0, 1), ylim=(0, 1))
         # Remove ticks from axes
         plt.xticks([], [])
         plt.yticks([], [])
+        if title:
+            title_obj = plt.title(title)
+            plt.setp(title_obj, color="r")
+
         # origo is located top left
         ax1.invert_yaxis()
 
@@ -68,7 +72,8 @@ class GazeAnimator:
             im = plt.imread(self.img)
             ax1.imshow(im, extent=[0, 1, 0, 1], zorder=0, alpha=0.8)
 
-        plt.show()
+        if show:
+            plt.show()
         return animation
 
     def anim_init(self):
@@ -97,10 +102,9 @@ if __name__ == "__main__":
     ]
     df = df[cols_to_keep]
     df = df[
-        (df["Presented Media name"] == "test1.png")
-        & (df["Participant name"] == "Einar")
+        (df["Presented Media name"] == "test1.png") & (df["Participant name"] == "Siri")
     ]
-    df_start = df.head(1200).dropna()
+    df_start = df.tail(1200).dropna()
     timestamps = df_start["Recording timestamp"].values
     duration = (timestamps[-1] - timestamps[0]) // 10 ** 3
 
@@ -116,6 +120,6 @@ if __name__ == "__main__":
         ],
     }
     animator = GazeAnimator(data, duration, img="test1.png")
-    anim = animator.animate()
+    anim = animator.animate("Eye gaze trajectory, Participant B", show=False)
     writer = animation.FFMpegWriter(fps=30)
-    # anim.save("animation.mp4", writer=writer)
+    anim.save("animation.mp4", writer=writer)

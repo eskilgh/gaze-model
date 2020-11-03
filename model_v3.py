@@ -6,6 +6,8 @@ import pandas as pd
 from numpy.random import default_rng
 from pprint import pprint
 from gaze_animator import GazeAnimator
+from scipy.stats import expon
+
 
 plt.rcParams[
     "animation.ffmpeg_path"
@@ -77,7 +79,7 @@ class GazeModel:
         return y_prev + xi_y * np.sqrt(D * dt)
 
     def generate_saccade(self, time, x, y):
-        sacc_duration = np.random.exponential(scale=10) + 10
+        sacc_duration = np.random.exponential(17) + 8
         time_vals = []
         x_vals = []
         y_vals = []
@@ -118,6 +120,8 @@ if __name__ == "__main__":
     model = GazeModel()
     duration = 10e3
     output = model.generate(duration)
-    anim = GazeAnimator(data=output, duration=duration, img="test1.png").animate()
+    anim = GazeAnimator(data=output, duration=duration, img="test1.png").animate(
+        "Simulated gaze trajectory", show=False
+    )
     writer = matplotlib.animation.FFMpegWriter(fps=30)
-    # anim.save("model_v3.mp4", writer=writer)
+    anim.save("model_v3.mp4", writer=writer)
